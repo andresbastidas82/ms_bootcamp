@@ -5,24 +5,20 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Getter
-@Builder
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class BootcampResponse {
+@Builder
+public class PageResponse<T> {
 
-    private Long id;
-    private String name;
-    private String description;
-    private LocalDate launchDate;
-    private Integer duration;
-    private List<Long> capacityIds;
-
-    private List<CapacityResponse> capacities;
-    private Long capacityCount;
+    private int page;
+    private int size;
+    private long totalElements;
+    private List<T> content;
 }

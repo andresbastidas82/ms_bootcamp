@@ -1,21 +1,19 @@
-package com.pragma.ms_bootcamp.application.dto;
+package com.pragma.ms_bootcamp.infrastructure.out.r2dbc.projections;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.List;
 
-@Getter
-@Builder
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BootcampRequest {
+public class BootcampWitchCapacityCountProjection {
+    private Long id;
     private String name;
     private String description;
     private LocalDate launchDate;
     private Integer duration;
-    private List<Long> capacityIds;
+    private Long capacityCount;
 }

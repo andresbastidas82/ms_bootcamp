@@ -6,22 +6,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
-import java.util.List;
-
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Bootcamp {
+public class Technology {
     private Long id;
     private String name;
-    private String description;
-    private LocalDate launchDate;
-    private Integer duration;
-    private List<Long> capacityIds;
-
-    private List<Capacity> capacities;
-    private Integer capacityCount;
 }

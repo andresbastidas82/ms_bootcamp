@@ -2,6 +2,7 @@ package com.pragma.ms_bootcamp.infrastructure.out.r2dbc.mapper;
 
 import com.pragma.ms_bootcamp.domain.model.Bootcamp;
 import com.pragma.ms_bootcamp.infrastructure.out.r2dbc.entity.BootcampEntity;
+import com.pragma.ms_bootcamp.infrastructure.out.r2dbc.projections.BootcampWitchCapacityCountProjection;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 
@@ -13,4 +14,6 @@ public interface IBootcampEntityMapper {
     Bootcamp toBootcampModel(BootcampEntity bootcampEntity);
 
     BootcampEntity toBootcampEntity(Bootcamp bootcamp);
+
+    Bootcamp toModelProjection(BootcampWitchCapacityCountProjection projection);
 }

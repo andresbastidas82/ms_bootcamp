@@ -36,4 +36,15 @@ public class BootcampHandler {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .bodyValue(response));
     }
+
+    public Mono<ServerResponse> deleteBootcamp(ServerRequest request) {
+        Long bootcampId = Long.parseLong(request.pathVariable("id"));
+
+        return bootcampHelper.deleteBootcamp(bootcampId)
+                .onErrorReturn(false)
+                .flatMap(response ->
+                        ServerResponse.ok()
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .bodyValue(response));
+    }
 }

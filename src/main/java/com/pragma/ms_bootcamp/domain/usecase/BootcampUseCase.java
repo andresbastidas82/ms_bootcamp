@@ -46,6 +46,29 @@ public class BootcampUseCase implements IBootcampServicePort {
         return bootcampPersistencePort.countAllBootcamps();
     }
 
+    @Override
+    public Mono<Boolean> deleteBootcamp(Long bootcampId) {
+        //Buscar capacidades y determinar si estan referenciadas en otros bootcamp
+        return bootcampPersistencePort.getCapacitiesIdsByBootcampId(bootcampId)
+                .collectList()
+                .flatMapMany(capacityIds ->
+                    bootcampPersistencePort.findCapacitiesNotReferencedInOtherBootcamps(bootcampId, capacityIds)
+                )
+                .collectList()
+                .flatMap(capacityIds -> {
+                    if(!capacityIds.isEmpty()) {
+                        return capacityClientPort.deleteCapacities(capacityIds);
+                    }
+                    return Mono.just(true);
+                })
+                .flatMap(result -> {
+                    if(Boolean.TRUE.equals(result)) {
+                        return bootcampPersistencePort.deleteBootcamp(bootcampId);
+                    }
+                    return Mono.just(false);
+                });
+    }
+
     private Mono<Bootcamp> getBootcampWitchCapacities(Bootcamp bootcamp) {
         return bootcampPersistencePort
                 .getCapacitiesIdsByBootcampId(bootcamp.getId())

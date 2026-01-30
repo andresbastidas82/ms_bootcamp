@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,6 +32,20 @@ public class CapacityClientAdapter implements ICapacityClientPort {
                 )
                 .retrieve()
                 .bodyToFlux(CapacityResponse.class);
+    }
+
+    @Override
+    public Mono<Boolean> deleteCapacities(List<Long> ids) {
+        String idsParam = ids.stream().map(String::valueOf).collect(Collectors.joining(","));
+        return webClient.delete()
+                .uri(uriBuilder ->
+                        uriBuilder
+                                .path("/capacity")
+                                .queryParam("ids", idsParam)
+                                .build()
+                )
+                .retrieve()
+                .bodyToMono(Boolean.class);
     }
 
 

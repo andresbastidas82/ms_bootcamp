@@ -11,4 +11,6 @@ public interface IBootcampServicePort {
     Flux<Bootcamp> getBootcamps(int page, int size, String sortBy, String direction);
 
     Mono<Long> countBootcamps();
+
+    Mono<Boolean> deleteBootcamp(Long bootcampId);
 }

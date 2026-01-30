@@ -10,4 +10,6 @@ public interface IBootcampHelper {
     Mono<BootcampResponse> createBootcamp(BootcampRequest bootcampRequest);
 
     Mono<PageResponse<BootcampResponse>> getBootcamps(int page, int size, String sortBy, String direction);
+
+    Mono<Boolean> deleteBootcamp(Long bootcampId);
 }

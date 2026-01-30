@@ -11,10 +11,12 @@ import com.pragma.ms_bootcamp.infrastructure.out.r2dbc.repository.IBootcampR2dbc
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Component
 @Slf4j
@@ -91,6 +93,26 @@ public class BootcampRepositoryAdapter implements IBootcampPersistencePort {
     @Override
     public Flux<Long> getCapacitiesIdsByBootcampId(Long bootcampId) {
         return bootcampCapacityR2dbcRepository.findCapacitiesIdsByBootcampId(bootcampId);
+    }
+
+    @Override
+    public Mono<Bootcamp> getBootcampById(Long bootcampId) {
+        return bootcampR2dbcRepository.findById(bootcampId)
+                .map(bootcampEntityMapper::toBootcampModel);
+    }
+
+    @Transactional
+    @Override
+    public Mono<Boolean> deleteBootcamp(Long bootcampId) {
+        return bootcampCapacityR2dbcRepository.deleteAllByBootcampId(bootcampId)
+                .then(bootcampR2dbcRepository.deleteById(bootcampId)
+                .thenReturn(true)
+                .onErrorResume(Mono::error));
+    }
+
+    @Override
+    public Flux<Long> findCapacitiesNotReferencedInOtherBootcamps(Long bootcampId, List<Long> ids) {
+        return bootcampCapacityR2dbcRepository.findCapacitiesNotReferencedInOtherBootcamps(ids, bootcampId);
     }
 
     private String resolveOrderBy(String sortBy, String direction) {

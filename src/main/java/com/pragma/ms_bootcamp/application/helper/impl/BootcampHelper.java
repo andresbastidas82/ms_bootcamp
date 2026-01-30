@@ -38,4 +38,9 @@ public class BootcampHelper implements IBootcampHelper {
                                     .build())
                 );
     }
+
+    @Override
+    public Mono<Boolean> deleteBootcamp(Long bootcampId) {
+        return bootcampServicePort.deleteBootcamp(bootcampId);
+    }
 }

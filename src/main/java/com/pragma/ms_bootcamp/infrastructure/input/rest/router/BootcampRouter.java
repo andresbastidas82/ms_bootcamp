@@ -18,6 +18,7 @@ public class BootcampRouter {
     public RouterFunction<ServerResponse> bootcampRoutes(BootcampHandler handler) {
         return route(POST("/api/v1/bootcamps"), handler::createBootcamp)
                 .andRoute(GET("/api/v1/bootcamps"), handler::listBootcamps)
-                .andRoute(DELETE("/api/v1/bootcamps/{id}"), handler::deleteBootcamp);
+                .andRoute(DELETE("/api/v1/bootcamps/{id}"), handler::deleteBootcamp)
+                .andRoute(POST("/api/v1/bootcamps/registration"), handler::registrationToBootcamp);
     }
 }

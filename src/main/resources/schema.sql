@@ -15,3 +15,15 @@ CREATE TABLE IF NOT EXISTS bootcamp_capacity (
             REFERENCES bootcamps(id)
             ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS bootcamp_person (
+     bootcamp_id BIGINT NOT NULL,
+     person_id BIGINT NOT NULL,
+     enrolled_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     PRIMARY KEY (bootcamp_id, person_id),
+     CONSTRAINT fk_bootcamp_person
+        FOREIGN KEY (bootcamp_id)
+            REFERENCES bootcamps(id)
+            ON DELETE CASCADE
+);
+

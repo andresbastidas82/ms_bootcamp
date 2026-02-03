@@ -4,9 +4,11 @@ import com.pragma.ms_bootcamp.domain.model.Bootcamp;
 import com.pragma.ms_bootcamp.domain.spi.IBootcampPersistencePort;
 import com.pragma.ms_bootcamp.infrastructure.exception.InvalidSortFieldException;
 import com.pragma.ms_bootcamp.infrastructure.out.r2dbc.entity.BootcampCapacityEntity;
+import com.pragma.ms_bootcamp.infrastructure.out.r2dbc.entity.BootcampPerson;
 import com.pragma.ms_bootcamp.infrastructure.out.r2dbc.mapper.IBootcampEntityMapper;
 import com.pragma.ms_bootcamp.infrastructure.out.r2dbc.projections.BootcampWitchCapacityCountProjection;
 import com.pragma.ms_bootcamp.infrastructure.out.r2dbc.repository.IBootcampCapacityR2dbcRepository;
+import com.pragma.ms_bootcamp.infrastructure.out.r2dbc.repository.IBootcampPersonR2dbcRepository;
 import com.pragma.ms_bootcamp.infrastructure.out.r2dbc.repository.IBootcampR2dbcRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -16,6 +18,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -24,15 +27,18 @@ public class BootcampRepositoryAdapter implements IBootcampPersistencePort {
 
     private final IBootcampR2dbcRepository bootcampR2dbcRepository;
     private final IBootcampCapacityR2dbcRepository bootcampCapacityR2dbcRepository;
+    private final IBootcampPersonR2dbcRepository bootcampPersonR2dbcRepository;
     private final IBootcampEntityMapper bootcampEntityMapper;
 
     private final DatabaseClient databaseClient;
 
     public BootcampRepositoryAdapter(IBootcampR2dbcRepository bootcampR2dbcRepository,
                                      IBootcampCapacityR2dbcRepository bootcampCapacityR2dbcRepository,
+                                     IBootcampPersonR2dbcRepository bootcampPersonR2dbcRepository,
                                      IBootcampEntityMapper bootcampEntityMapper, DatabaseClient databaseClient) {
         this.bootcampR2dbcRepository = bootcampR2dbcRepository;
         this.bootcampCapacityR2dbcRepository = bootcampCapacityR2dbcRepository;
+        this.bootcampPersonR2dbcRepository = bootcampPersonR2dbcRepository;
         this.bootcampEntityMapper = bootcampEntityMapper;
         this.databaseClient = databaseClient;
     }
@@ -113,6 +119,18 @@ public class BootcampRepositoryAdapter implements IBootcampPersistencePort {
     @Override
     public Flux<Long> findCapacitiesNotReferencedInOtherBootcamps(Long bootcampId, List<Long> ids) {
         return bootcampCapacityR2dbcRepository.findCapacitiesNotReferencedInOtherBootcamps(ids, bootcampId);
+    }
+
+    @Override
+    public Mono<Boolean> registrationToBootcamp(Long bootcampId, Long personId) {
+        BootcampPerson enrollment  = new BootcampPerson(bootcampId, personId, LocalDateTime.now());
+        return bootcampPersonR2dbcRepository.save(enrollment)
+                .map(saved -> true);
+    }
+
+    @Override
+    public Flux<Bootcamp> findActiveBootcampsByPersonId(Long personId) {
+        return bootcampR2dbcRepository.findActiveBootcampsByPersonId(LocalDate.now(), personId);
     }
 
     private String resolveOrderBy(String sortBy, String direction) {

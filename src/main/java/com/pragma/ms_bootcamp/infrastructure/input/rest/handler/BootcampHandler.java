@@ -1,6 +1,7 @@
 package com.pragma.ms_bootcamp.infrastructure.input.rest.handler;
 
 import com.pragma.ms_bootcamp.application.dto.BootcampRequest;
+import com.pragma.ms_bootcamp.application.dto.RegistrationRequest;
 import com.pragma.ms_bootcamp.application.helper.IBootcampHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -42,6 +43,15 @@ public class BootcampHandler {
 
         return bootcampHelper.deleteBootcamp(bootcampId)
                 .onErrorReturn(false)
+                .flatMap(response ->
+                        ServerResponse.ok()
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .bodyValue(response));
+    }
+
+    public Mono<ServerResponse> registrationToBootcamp(ServerRequest request) {
+        return request.bodyToMono(RegistrationRequest.class)
+                .flatMap(bootcampHelper::registrationToBootcamp)
                 .flatMap(response ->
                         ServerResponse.ok()
                                 .contentType(MediaType.APPLICATION_JSON)

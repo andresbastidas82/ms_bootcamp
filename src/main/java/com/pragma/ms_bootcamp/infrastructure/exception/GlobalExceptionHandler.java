@@ -2,6 +2,7 @@ package com.pragma.ms_bootcamp.infrastructure.exception;
 
 import com.pragma.ms_bootcamp.domain.exception.BadRequestException;
 import com.pragma.ms_bootcamp.domain.exception.InvalidBootcampException;
+import com.pragma.ms_bootcamp.domain.exception.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -42,6 +43,16 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now()).build();
 
         return buildResponse(HttpStatus.BAD_REQUEST, error);
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleNotFoundException(
+            NotFoundException ex) {
+        ErrorResponse error = ErrorResponse.builder()
+                .code(HttpStatus.NOT_FOUND.value())
+                .errors(List.of(ex.getMessage()))
+                .timestamp(LocalDateTime.now()).build();
+        return buildResponse(HttpStatus.NOT_FOUND, error);
     }
 
     @ExceptionHandler(BadRequestException.class)

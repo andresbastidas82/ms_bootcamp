@@ -3,6 +3,8 @@ package com.pragma.ms_bootcamp.application.helper.impl;
 import com.pragma.ms_bootcamp.application.dto.BootcampRequest;
 import com.pragma.ms_bootcamp.application.dto.BootcampResponse;
 import com.pragma.ms_bootcamp.application.dto.PageResponse;
+import com.pragma.ms_bootcamp.application.dto.RegistrationRequest;
+import com.pragma.ms_bootcamp.application.dto.RegistrationResponse;
 import com.pragma.ms_bootcamp.application.helper.IBootcampHelper;
 import com.pragma.ms_bootcamp.application.mapper.IBootcampRequestMapper;
 import com.pragma.ms_bootcamp.domain.api.IBootcampServicePort;
@@ -42,5 +44,16 @@ public class BootcampHelper implements IBootcampHelper {
     @Override
     public Mono<Boolean> deleteBootcamp(Long bootcampId) {
         return bootcampServicePort.deleteBootcamp(bootcampId);
+    }
+
+    @Override
+    public Mono<RegistrationResponse> registrationToBootcamp(RegistrationRequest request) {
+        return bootcampServicePort.registrationToBootcamp(request.getBootcampId(), request.getPersonId())
+                .map(result -> RegistrationResponse.builder()
+                        .stateRegistration(result)
+                        .personId(request.getPersonId())
+                        .bootcampId(request.getBootcampId())
+                        .message(Boolean.TRUE.equals(result) ? "Registro exitoso" : "Error en el registro")
+                        .build());
     }
 }

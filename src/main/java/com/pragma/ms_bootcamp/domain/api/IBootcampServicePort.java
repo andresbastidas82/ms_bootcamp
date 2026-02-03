@@ -13,4 +13,6 @@ public interface IBootcampServicePort {
     Mono<Long> countBootcamps();
 
     Mono<Boolean> deleteBootcamp(Long bootcampId);
+
+    Mono<Boolean> registrationToBootcamp(Long bootcampId, Long personId);
 }

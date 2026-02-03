@@ -21,4 +21,8 @@ public interface IBootcampPersistencePort {
     Mono<Boolean> deleteBootcamp(Long bootcampId);
 
     Flux<Long> findCapacitiesNotReferencedInOtherBootcamps(Long bootcampId, List<Long> ids);
+
+    Mono<Boolean> registrationToBootcamp(Long bootcampId, Long personId);
+
+    Flux<Bootcamp> findActiveBootcampsByPersonId(Long personId);
 }

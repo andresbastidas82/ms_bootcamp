@@ -8,7 +8,10 @@ import com.pragma.ms_bootcamp.domain.model.Capacity;
 import com.pragma.ms_bootcamp.domain.model.Technology;
 import com.pragma.ms_bootcamp.domain.spi.IBootcampPersistencePort;
 import com.pragma.ms_bootcamp.domain.spi.ICapacityClientPort;
+import com.pragma.ms_bootcamp.domain.spi.IPersonClientPort;
+import com.pragma.ms_bootcamp.domain.spi.IReportClientPort;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -27,19 +30,35 @@ import static com.pragma.ms_bootcamp.domain.utils.Constants.INVALID_MAX_5_BOOTCA
 import static com.pragma.ms_bootcamp.domain.utils.Constants.INVALID_REGISTERED_BOOTCAMP;
 import static com.pragma.ms_bootcamp.domain.utils.Constants.LAUNCH_DATE_IS_REQUIRED;
 import static com.pragma.ms_bootcamp.domain.utils.Constants.NAME_IS_REQUIRED;
+import static com.pragma.ms_bootcamp.domain.utils.Constants.PERSON_NOT_FOUND;
 import static com.pragma.ms_bootcamp.domain.utils.Constants.REPEATED_CAPACITY;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BootcampUseCase implements IBootcampServicePort {
 
     private final IBootcampPersistencePort bootcampPersistencePort;
     private final ICapacityClientPort capacityClientPort;
+    private final IReportClientPort reportClientPort;
+    private final IPersonClientPort personClientPort;
 
     @Override
     public Mono<Bootcamp> save(Bootcamp bootcamp) {
         return validateBusinessRules(bootcamp)
-                .then(bootcampPersistencePort.save(bootcamp));
+                .then(bootcampPersistencePort.save(bootcamp))
+                .flatMap(saved ->
+                        getBootcampWitchCapacities(saved)
+                                .flatMap(result ->
+                                        reportClientPort
+                                                .registredBootcamp(result)
+                                                .onErrorResume(error -> {
+                                                    log.error("Error registrando bootcamp en reporte {}", error.getMessage());
+                                                    return Mono.empty();
+                                                })
+                                                .thenReturn(saved)
+                                )
+                );
     }
 
     @Override
@@ -79,44 +98,61 @@ public class BootcampUseCase implements IBootcampServicePort {
     @Override
     public Mono<Boolean> registrationToBootcamp(Long bootcampId, Long personId) {
         return validateRegistration(bootcampId, personId)
-                .then(bootcampPersistencePort.registrationToBootcamp(bootcampId, personId));
+                .then(bootcampPersistencePort.registrationToBootcamp(bootcampId, personId))
+                .flatMap(result -> {
+                    if (Boolean.TRUE.equals(result)) {
+                        return reportClientPort
+                                .registredPersonInBootcamp(bootcampId, personId)
+                                .onErrorResume(error -> {
+                                    log.error("Error enviando reporte {}", error.getMessage());
+                                    return Mono.empty();
+                                })
+                                .thenReturn(true);
+                    }
+                    return Mono.just(false);
+                });
     }
 
     private Mono<Void> validateRegistration(Long bootcampId, Long personId) {
-        return bootcampPersistencePort
-                .findActiveBootcampsByPersonId(personId)
-                .collectList()
-                .flatMap(activeBootcamps -> {
-                    // 1️⃣ Ya registrado
-                    if (activeBootcamps.stream().anyMatch(b -> b.getId().equals(bootcampId))) {
-                        return Mono.error(new BadRequestException(ALREADY_REGISTERED));
-                    }
-                    // 2️⃣ Máximo 5 bootcamps
-                    if (activeBootcamps.size() >= 5) {
-                        return Mono.error(new BadRequestException(INVALID_MAX_5_BOOTCAMP));
-                    }
-                    // 3️⃣ Obtener bootcamp a registrar
-                    return bootcampPersistencePort.getBootcampById(bootcampId)
-                            .switchIfEmpty(Mono.error(new NotFoundException(BOOTCAMP_NOT_FOUND)))
-                            .flatMap(newBootcamp -> {
-                                LocalDate currentDate = LocalDate.now();
-                                if (newBootcamp.getLaunchDate().plusDays(newBootcamp.getDuration()).isBefore(currentDate)) {
-                                    return Mono.error(new BadRequestException(BOOTCAMP_FINISHED));
-                                }
-                                // 4️⃣ Validar solapamiento de fechas
-                                boolean overlaps = activeBootcamps.stream().anyMatch(existing -> {
-                                    LocalDate existingStart = existing.getLaunchDate();
-                                    LocalDate existingEnd = existingStart.plusDays(existing.getDuration());
-                                    LocalDate newStart = newBootcamp.getLaunchDate();
-                                    return !newStart.isAfter(existingEnd) && !newStart.isBefore(existingStart);
-                                });
+        return personClientPort.getPersonById(personId)
+                .switchIfEmpty(Mono.error(new NotFoundException(PERSON_NOT_FOUND)))
+                .flatMap(person ->
+                        bootcampPersistencePort
+                        .findActiveBootcampsByPersonId(personId)
+                        .collectList()
+                        .flatMap(activeBootcamps -> {
+                            // 1️⃣ Ya registrado
+                            if (activeBootcamps.stream().anyMatch(b -> b.getId().equals(bootcampId))) {
+                                return Mono.error(new BadRequestException(ALREADY_REGISTERED));
+                            }
+                            // 2️⃣ Máximo 5 bootcamps
+                            if (activeBootcamps.size() >= 5) {
+                                return Mono.error(new BadRequestException(INVALID_MAX_5_BOOTCAMP));
+                            }
+                            // 3️⃣ Obtener bootcamp a registrar
+                            return bootcampPersistencePort.getBootcampById(bootcampId)
+                                    .switchIfEmpty(Mono.error(new NotFoundException(BOOTCAMP_NOT_FOUND)))
+                                    .flatMap(newBootcamp -> {
+                                        LocalDate currentDate = LocalDate.now();
+                                        if (newBootcamp.getLaunchDate().plusDays(newBootcamp.getDuration()).isBefore(currentDate)) {
+                                            return Mono.error(new BadRequestException(BOOTCAMP_FINISHED));
+                                        }
+                                        // 4️⃣ Validar solapamiento de fechas
+                                        boolean overlaps = activeBootcamps.stream().anyMatch(existing -> {
+                                            LocalDate existingStart = existing.getLaunchDate();
+                                            LocalDate existingEnd = existingStart.plusDays(existing.getDuration());
+                                            LocalDate newStart = newBootcamp.getLaunchDate();
+                                            return !newStart.isAfter(existingEnd) && !newStart.isBefore(existingStart);
+                                        });
 
-                                if (overlaps) {
-                                    return Mono.error(new BadRequestException(INVALID_REGISTERED_BOOTCAMP));
-                                }
-                                return Mono.empty();
-                            });
-                });
+                                        if (overlaps) {
+                                            return Mono.error(new BadRequestException(INVALID_REGISTERED_BOOTCAMP));
+                                        }
+                                        return Mono.empty();
+                                    });
+                        })
+                );
+
     }
 
 

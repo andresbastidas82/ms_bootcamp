@@ -13,4 +13,5 @@ public class Constants {
     public static final String INVALID_REGISTERED_BOOTCAMP = "No es posible registrarse a este bootcamp dado que las fechas se cruzan con otro bootcamp";
     public static final String BOOTCAMP_NOT_FOUND = "El bootcamp no existe";
     public static final String BOOTCAMP_FINISHED = "El bootcamp ya se encuentra finalizado";
+    public static final String PERSON_NOT_FOUND = "La persona no existe";
 }

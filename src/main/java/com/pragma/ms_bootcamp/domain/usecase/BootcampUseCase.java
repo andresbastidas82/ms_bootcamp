@@ -46,7 +46,7 @@ public class BootcampUseCase implements IBootcampServicePort {
     @Override
     public Mono<Bootcamp> save(Bootcamp bootcamp) {
         return validateBusinessRules(bootcamp)
-                .then(bootcampPersistencePort.save(bootcamp))
+                .then(Mono.defer(() -> bootcampPersistencePort.save(bootcamp)))
                 .flatMap(saved ->
                         getBootcampWitchCapacities(saved)
                                 .flatMap(result ->
@@ -98,7 +98,7 @@ public class BootcampUseCase implements IBootcampServicePort {
     @Override
     public Mono<Boolean> registrationToBootcamp(Long bootcampId, Long personId) {
         return validateRegistration(bootcampId, personId)
-                .then(bootcampPersistencePort.registrationToBootcamp(bootcampId, personId))
+                .then(Mono.defer(() -> bootcampPersistencePort.registrationToBootcamp(bootcampId, personId)))
                 .flatMap(result -> {
                     if (Boolean.TRUE.equals(result)) {
                         return reportClientPort
